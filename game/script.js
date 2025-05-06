@@ -52,6 +52,26 @@ function deselect()
     selected = null;
 }
 
+function checkWinCondition()
+{
+    if (n_white === 0)
+    {
+        endGame();
+        return true;
+    }
+    else if (n_black === 0)
+    {
+        endGame();
+        return true;
+    }
+    return false;
+}
+
+function endTurn()
+    { current = current === "white" ? "black" : "white"; }
+
+function endGame() { }
+
 function addSquare(className, row, column, parent)
     { return addElem("square", className, row, column, parent); }
 
@@ -78,6 +98,19 @@ Node.prototype.addClass = function(className)
     { return this.classList.add(className); }
 Node.prototype.removeClass = function(className)
     { return this.classList.remove(className); }
+
+function getByRowColumn(row, column)
+    { return document.querySelector(`[data-row="${row}"][data-col="${column}"]`); }
+
+function isCurrentChecker(elem)
+    { return elem.firstChild.hasClass("checker") && elem.firstChild.hasClass(current); }
+function notCurrentChecker(elem)
+    { return elem.firstChild.hasClass("checker") && !elem.firstChild.hasClass(current); }
+
+function isDam(elem)
+    { return elem.hasClass("dam"); }
+function isCapture(row, column)
+    { return Math.abs(row) === 2 && Math.abs(column) === 2; }
 
 //#endregion
 
