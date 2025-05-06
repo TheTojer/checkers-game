@@ -124,7 +124,7 @@ function square_onClick(e)
     {
         if (selected === s.firstChild) deselect();
         else if (!s.firstChild && isValidMode(r, c))
-            moveChecker(r, c, s);
+            moveChecker(selected, r, c, s);
     }
     else if (s.firstChild && isCurrentChecker(s)) select(s.firstChild)
 }
@@ -256,3 +256,5 @@ function getAvailableCapturesForChecker(checker)
 
     return captures;
 }
+
+startGame();
