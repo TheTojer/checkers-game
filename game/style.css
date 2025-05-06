@@ -1,0 +1,73 @@
+body
+{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 98vh;
+}
+
+#desk
+{
+    display: grid;
+    grid: repeat(8, 1fr) / repeat(8, 1fr);
+    grid-auto-flow: row;
+    width: 70vh;
+    height: 70vh;
+    background-color: chocolate;
+    border: 5px solid saddlebrown;
+}
+
+.square
+{
+    width: 1fr;
+    height: 1fr;
+    position: relative;
+}
+
+.square.white
+{
+    background-color: rgb(238, 191, 158);
+}
+
+.square.black
+{
+    background-color: rgb(66, 34, 12);
+}
+
+.checker
+{
+    width: 8.75vh;
+    height: 8.75vh;
+    border-radius: 50%;
+    border: 2px solid;
+    box-sizing: border-box;
+    margin: auto;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+}
+
+.checker.white
+{
+    background-color: white;
+    border-color: lightgrey;
+}
+
+.checker.black
+{
+    background-color: rgb(37, 37, 37);
+    border-color: black;
+}
+
+.checker.dam
+{
+    border: 5px solid gold;
+}
+
+.selected
+{
+    outline: 5px solid green;
+}
