@@ -9,6 +9,8 @@ let n_white;
 let n_black;
 let isMulticapture;
 
+//#region main
+
 function startGame()
 {
     n_white = 12;
@@ -76,3 +78,148 @@ Node.prototype.addClass = function(className)
     { return this.classList.add(className); }
 Node.prototype.removeClass = function(className)
     { return this.classList.remove(className); }
+
+//#endregion
+
+function square_onClick(e)
+{
+    const s = e.target.hasClass("square") ? e.target : e.target.parentElement;
+    const r = parseInt(s.dataset.row);
+    const c = parseInt(s.dataset.column);
+
+    if (selected)
+    {
+        if (selected === s.firstChild) deselect();
+        else if (!s.firstChild && isValidMode(r, c))
+            moveChecker(r, c, s);
+    }
+    else if (s.firstChild && isCurrentChecker(s)) select(s.firstChild)
+}
+
+function isValidMode(row, column)
+{
+    const r_t = parseInt(selected.dataset.row);
+    const c_t = parseInt(selected.dataset.column);
+
+    const r_move = row - r_t;
+    const c_move = column - c_t;
+
+    const captureMoves = getAvailableCaptures(current);
+
+    is_capt = isCapture();
+
+    if (captureMoves.length > 0 && !is_capt) return false;
+
+    if (!isDam(selected) && !isMulticapture && 
+        (current === "white" && r_move > 0) ||
+        (current === "black" && r_move < 0))
+        return false;
+
+    if (is_capt)
+    {
+        const r_mid = r_t + r_move / 2;
+        const c_mid = c_t + c_move / 2;
+        const s_mid = getByRowColumn(r_mid, c_mid);
+
+        if (s_mid.firstChild && isCurrentChecker(s_mid)) return true;
+    }
+    else if (Math.abs(r_move) === 1 && Math.abs(c_move) === 1) return true;
+
+    return false;
+}
+
+function moveChecker(checker, row, column, square)
+{
+    const r_t = parseInt(checker.dataset.row);
+    const c_t = parseInt(checker.dataset.column);
+
+    const r_move = row - r_t;
+    const c_move = column - c_t;
+
+    const is_capt = isCapture();
+
+    if (is_capt)
+    {
+        const r_mid = r_t + r_move / 2;
+        const c_mid = c_t + c_move / 2;
+        const s_mid = getByRowColumn(r_mid, c_mid);
+
+        if (s_mid.firstChild && notCurrentChecker(s_mid))
+        {
+            s_mid.removeChild(s_mid.firstChild);
+            current === "white" ? n_black-- : n_white--;
+            performMove(checker, s_target, row, column);
+
+            const furtherCaptures = getAvailableCapturesForChecker(checker);
+            if (furtherCaptures.length > 0)
+            {
+                isMulticapture = true;
+                select(checker);
+                return;
+            }
+            else isMulticapture = false;
+        }
+    }
+    else performMove(checker, square, row, column);
+
+    endTurn();
+}
+
+function performMove(checker, squareTarget, row, column)
+{
+    squareTarget.appendChild(checker);
+
+    checker.dataset.row = row;
+    checker.dataset.column = column;
+    deselect();
+
+    if (row === 0 && current === "white" ||
+        row === 7 && current === "black")
+        checker.addClass("dam");
+
+    checkWinCondition();
+}
+
+function getAvailableCaptures(player)
+{
+    let captures = [];
+    const checkers = document.querySelectorAll(`.checker.${player}`);
+
+    checkers.forEach(ch =>
+    {
+        captures = captures.concat(getAvailableCapturesForChecker(ch));
+    });
+
+    return captures;
+}
+
+function getAvailableCapturesForChecker(checker)
+{
+    const row = parseInt(checker.dataset.row);
+    const column = parseInt(checker.dataset.column);
+    const directions = 
+    [
+        { row: 1, column: 1 },
+        { row: 1, column: -1 },
+        { row: -1, column: 1 },
+        { row: -1, column: -1 },
+    ];
+
+    const captures = [];
+
+    directions.forEach(dir =>
+    {
+        const r_target = row + 2 * dir.row;
+        const c_target = column + 2 * dir.column;
+        const r_mid = row + dir.row;
+        const c_mid = column + dir.column;
+        const s_target = getByRowColumn(r_target, c_target);
+        const s_mid = getByRowColumn(r_mid, c_mid);
+
+        if (s_target && s_mid && !s_target.firstChild && s_mid.firstChild &&
+            notCurrentChecker(s_mid))
+            captures.push({ checker, r_target, c_target });
+    });
+
+    return captures;
+}
