@@ -1,4 +1,5 @@
 const desk = document.getElementById("desk");
+const state = document.getElementById("status");
 const n_row = 8;
 const n_column = 8;
 
@@ -17,6 +18,8 @@ function startGame()
     n_black = 12;
     selected = null;
     current = "white";
+    setState();
+
     createBoard();
     isMulticapture = false;
 }
@@ -38,6 +41,24 @@ function createBoard()
     }
 }
 
+function square_onClick(e)
+{
+    const s = e.target.hasClass("square") ? e.target : e.target.parentElement;
+    const r = parseInt(s.dataset.row);
+    const c = parseInt(s.dataset.column);
+
+    if (selected)
+    {
+        if (selected === s.firstChild) deselect();
+        else if (!s.firstChild && isValidMode(r, c))
+        {
+            console.log(isValidMode(r, c));
+            moveChecker(selected, r, c, s);
+        }
+    }
+    else if (s.firstChild && isCurrentChecker(s)) select(s.firstChild)
+}
+
 function select(checker)
 {
     if (selected) deselect();
@@ -52,25 +73,23 @@ function deselect()
     selected = null;
 }
 
-function checkWinCondition()
+function checkWin()
 {
-    if (n_white === 0)
-    {
-        endGame();
-        return true;
-    }
-    else if (n_black === 0)
-    {
-        endGame();
-        return true;
-    }
+    if (n_white === 0 || n_black === 0) return endGame(current);
     return false;
 }
 
 function endTurn()
-    { current = current === "white" ? "black" : "white"; }
+{
+    current = current === "white" ? "black" : "white";
+    setState();
+}
 
-function endGame() { }
+function endGame(winner)
+{
+    state.innerText = `${current} wins!!!`;
+    return true;
+}
 
 function addSquare(className, row, column, parent)
     { return addElem("square", className, row, column, parent); }
@@ -92,6 +111,11 @@ function addElem(firstClass, secondClass, row, column, parent)
     return elem;
 }
 
+function setState()
+{
+    state.innerText = `${current} turn`;
+}
+
 Node.prototype.hasClass = function(className)
     { return this.classList.contains(className); }
 Node.prototype.addClass = function(className)
@@ -100,7 +124,7 @@ Node.prototype.removeClass = function(className)
     { return this.classList.remove(className); }
 
 function getByRowColumn(row, column)
-    { return document.querySelector(`[data-row="${row}"][data-col="${column}"]`); }
+    { return document.querySelector(`[data-row="${row}"][data-column="${column}"]`); }
 
 function isCurrentChecker(elem)
     { return elem.firstChild.hasClass("checker") && elem.firstChild.hasClass(current); }
@@ -114,21 +138,6 @@ function isCapture(row, column)
 
 //#endregion
 
-function square_onClick(e)
-{
-    const s = e.target.hasClass("square") ? e.target : e.target.parentElement;
-    const r = parseInt(s.dataset.row);
-    const c = parseInt(s.dataset.column);
-
-    if (selected)
-    {
-        if (selected === s.firstChild) deselect();
-        else if (!s.firstChild && isValidMode(r, c))
-            moveChecker(selected, r, c, s);
-    }
-    else if (s.firstChild && isCurrentChecker(s)) select(s.firstChild)
-}
-
 function isValidMode(row, column)
 {
     const r_t = parseInt(selected.dataset.row);
@@ -137,15 +146,15 @@ function isValidMode(row, column)
     const r_move = row - r_t;
     const c_move = column - c_t;
 
-    const captureMoves = getAvailableCaptures(current);
+    const captures = getAvailableCaptures(current);
 
-    is_capt = isCapture();
+    const is_capt = isCapture(r_move, c_move);
 
-    if (captureMoves.length > 0 && !is_capt) return false;
+    if (captures.length > 0 && !is_capt) return false;
 
-    if (!isDam(selected) && !isMulticapture && 
-        (current === "white" && r_move > 0) ||
-        (current === "black" && r_move < 0))
+    if (!isDam(selected) && !isMulticapture)
+        if (current === "white" && r_move > 0 ||
+            current === "black" && r_move < 0)
         return false;
 
     if (is_capt)
@@ -154,7 +163,7 @@ function isValidMode(row, column)
         const c_mid = c_t + c_move / 2;
         const s_mid = getByRowColumn(r_mid, c_mid);
 
-        if (s_mid.firstChild && isCurrentChecker(s_mid)) return true;
+        if (s_mid.firstChild && notCurrentChecker(s_mid)) return true;
     }
     else if (Math.abs(r_move) === 1 && Math.abs(c_move) === 1) return true;
 
@@ -165,11 +174,13 @@ function moveChecker(checker, row, column, square)
 {
     const r_t = parseInt(checker.dataset.row);
     const c_t = parseInt(checker.dataset.column);
-
+    const s_target = getByRowColumn(row, column);
     const r_move = row - r_t;
     const c_move = column - c_t;
 
-    const is_capt = isCapture();
+    const is_capt = isCapture(r_move, c_move);
+
+    let b;
 
     if (is_capt)
     {
@@ -181,7 +192,7 @@ function moveChecker(checker, row, column, square)
         {
             s_mid.removeChild(s_mid.firstChild);
             current === "white" ? n_black-- : n_white--;
-            performMove(checker, s_target, row, column);
+            b = performMove(checker, s_target, row, column);
 
             const furtherCaptures = getAvailableCapturesForChecker(checker);
             if (furtherCaptures.length > 0)
@@ -193,9 +204,9 @@ function moveChecker(checker, row, column, square)
             else isMulticapture = false;
         }
     }
-    else performMove(checker, square, row, column);
+    else b = performMove(checker, square, row, column);
 
-    endTurn();
+    if (!b) endTurn();
 }
 
 function performMove(checker, squareTarget, row, column)
@@ -210,7 +221,7 @@ function performMove(checker, squareTarget, row, column)
         row === 7 && current === "black")
         checker.addClass("dam");
 
-    checkWinCondition();
+    return checkWin();
 }
 
 function getAvailableCaptures(player)

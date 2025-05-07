@@ -1,9 +1,10 @@
 body
 {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 98vh;
+    height: 90vh;
 }
 
 #desk
@@ -13,6 +14,12 @@ body
     grid-auto-flow: row;
     width: 70vh;
     height: 70vh;
+    background-color: chocolate;
+    border: 5px solid saddlebrown;
+}
+
+#status
+{
     background-color: chocolate;
     border: 5px solid saddlebrown;
 }
